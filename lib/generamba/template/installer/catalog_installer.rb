@@ -1,5 +1,6 @@
 require 'generamba/template/installer/abstract_installer.rb'
 require 'generamba/template/helpers/rambaspec_validator.rb'
+require 'generamba/template/installer/models/catalog_template_model.rb'
 require 'fileutils'
 require 'tmpdir'
 
@@ -61,13 +62,23 @@ module Generamba
     #
     # @return [Pathname] A path to a template, if found
     def browse_catalog_for_a_template(catalog_path, template_name)
-      template_path = catalog_path.join(template_name)
+      template_models = []
+      Dir.entries(catalog_path).each { |template_folder|
+        Dir.entries(template_folder).each { |inner_element|
+          if inner_element.extname == 'rambaspec'
+            model = Generamba::CatalogTemplateModel.new(inner_element.filename, template_folder)
+            template_models.push(model)
+          end
+        }
+      }
 
-      if Dir.exist?(template_path)
-        return template_path
-      end
+      template_models.each { |model|
+        if model.rambaspec_name == template_name
+          template_path = model.@folder_name
+        end
+      }
 
-      return nil
+      return template_path
     end
   end
 end
